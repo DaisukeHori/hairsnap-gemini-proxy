@@ -38,6 +38,18 @@ try:
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
+    # torchがない環境でもクラス定義を通すためのダミー
+    class _DummyTorch:
+        float16 = None
+        @staticmethod
+        def inference_mode():
+            return lambda fn: fn  # no-op decorator
+        class Generator:
+            def __init__(self, *a, **kw): pass
+            def manual_seed(self, s): return self
+        @staticmethod
+        def load(*a, **kw): return {}
+    torch = _DummyTorch()
 
 # Stable-Hair のコードパスを追加
 if os.path.exists("/app/Stable-Hair"):
