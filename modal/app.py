@@ -41,7 +41,7 @@ image = (
     .pip_install(
         "torch==2.4.0",
         "torchvision==0.19.0",
-        "diffusers==0.31.0",
+        "diffusers==0.27.2",  # Stable-Hair needs FromOriginalControlnetMixin (removed in 0.28+)
         "transformers==4.45.2",
         "accelerate>=0.33.0",
         "safetensors>=0.4.0",
