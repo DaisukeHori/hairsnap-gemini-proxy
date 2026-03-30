@@ -281,7 +281,7 @@ class StableHairInference:
         self.bald_pipe.to(self.device)
         print(f"[init] GPU transfer done in {time.time()-t0:.1f}s")
 
-    @modal.web_endpoint(method="POST", docs=True)
+    @modal.fastapi_endpoint(method="POST", docs=True)
     def generate(self, request: dict):
         """
         Stable-Hair 推論エンドポイント
