@@ -277,6 +277,54 @@ import { auth } from '../../../../../lib/auth';
 
 最初のpush時のコードにバグがあると、そのビルドはFAILEDになる。修正してpushすれば新しいビルドが走る。**FAILEDビルドのワーカーが残っている場合は上記のリセット手順を実行**。
 
+### 8. Modal: API名が頻繁に変わる
+
+Modal CLIのバージョンアップで、デコレータ名がリネームされることがある。エラーメッセージに新名が表示されるので従う。
+
+| 旧名 | 新名 | 変更時期 |
+|------|------|---------|
+| `container_idle_timeout` | `scaledown_window` | 2025年初頭 |
+| `@modal.web_endpoint` | `@modal.fastapi_endpoint` | 2025-03-05 |
+
+### 9. Modal: Stable-Hair のバンドル版 diffusers が pip パッケージを上書き
+
+**症状:** `ImportError: cannot import name 'cached_download' from 'huggingface_hub'`
+
+**原因:** Stable-Hair リポジトリに古い `diffusers/` フォルダが含まれている。`sys.path.insert(0, sh_code)` で先頭に追加すると、pip でインストールした最新版 `diffusers` の代わりにこの古いコードが読み込まれる。古い `diffusers` は `huggingface_hub.cached_download`（削除済み関数）を使っている。
+
+**解決策:** `sys.path.insert(0, ...)` → `sys.path.append(...)` に変更して pip パッケージを優先させる:
+
+```python
+# ❌ Stable-Hair のバンドル版 diffusers が優先される
+sys.path.insert(0, sh_code)
+
+# ✅ pip の diffusers が優先、Stable-Hair 独自モジュール (ref_encoder, utils) だけ使う
+sys.path.append(sh_code)
+```
+
+### 10. Modal: Memory Snapshot 作成タイムアウト（150秒制限）
+
+**症状:** 初回コールドスタートで HTTP 303 が返り、150秒でタイムアウト
+
+**原因:** Memory Snapshot 作成時に `@modal.enter(snap=True)` で全モデル（~8GB）をCPUに読み込むが、Modal の Web エンドポイントにはスタートアップタイムアウト（約150秒）がある。ネットワークボリュームからの読み込みが遅い場合にタイムアウトする。
+
+**対策:**
+- `memory=8192` でコンテナメモリを増やす
+- モデル読み込みの順序を最適化する
+- 一度スナップショットが作成されれば、以降のコールドスタートは数秒で済む
+
+### 11. Modal: Google Drive からのモデルダウンロードが不安定
+
+`gdown.download_folder()` でフォルダ一括ダウンロードが失敗することがある。失敗した場合は個別ファイルIDで再試行する:
+
+```python
+gdown.download(id="1oYNoKPEN0mZpRhZ7s3_xSDlaO209vFn4", output="stage1/pytorch_model.bin")
+```
+
+### 12. Stable-Hair ライセンス
+
+**Apache 2.0（商用利用可）。** ただし Stable Diffusion v1.5 の CreativeML Open RAIL-M ライセンスも遵守が必要（有害コンテンツ生成禁止等の行動制限あり）。
+
 ---
 
 ## コスト比較
@@ -295,23 +343,32 @@ import { auth } from '../../../../../lib/auth';
 hairsnap-gemini-proxy/
 ├── app/                              # Vercel (Next.js プロキシ)
 │   ├── api/
-│   │   ├── health/route.ts
+│   │   ├── health/route.ts          # ヘルスチェック (バックエンド表示)
 │   │   └── v1beta/models/[...path]/
 │   │       └── route.ts             # Gemini互換エンドポイント
 │   ├── layout.tsx
 │   └── page.tsx
 ├── lib/
 │   ├── auth.ts                      # API キー認証 (x-goog-api-key)
-│   ├── generate-content.ts          # リクエスト解析→RunPod転送
+│   ├── generate-content.ts          # リクエスト解析→バックエンド転送
 │   ├── runpod-client.ts             # RunPod Serverless クライアント
+│   ├── modal-client.ts              # Modal Serverless クライアント
 │   └── types.ts                     # Gemini API 型定義
-├── runpod/                           # RunPod (推論エンジン)
-│   ├── Dockerfile                   # 軽量: python:3.10-slim
-│   ├── handler.py                   # Stable-Hair推論 + エコーモード
-│   ├── download_models.py           # Network Volume用モデルDL
+├── __tests__/                        # Vitest テスト (220本)
+│   ├── unit/                        # 単体テスト (120本)
+│   └── integration/                 # 結合テスト (100本)
+├── modal/                            # Modal (推論エンジン) ★メイン
+│   ├── app.py                       # GPU Memory Snapshot対応
+│   └── README.md
+├── runpod/                           # RunPod (推論エンジン、不採用)
+│   ├── Dockerfile
+│   ├── handler.py
+│   ├── download_models.py
 │   ├── requirements.txt
 │   └── test_input.json
+├── .github/workflows/modal-deploy.yml # Modal自動デプロイ
 ├── .env.example
+├── vitest.config.ts
 ├── package.json
 ├── tsconfig.json
 └── vercel.json
@@ -352,9 +409,14 @@ curl -X POST https://your-proxy.vercel.app/api/v1beta/models/stable-hair-v1:gene
 - [x] RunPod GitHub連携設定 & 初回デプロイ
 - [x] Vercel デプロイ
 - [x] E2Eテスト（エコーモード）
-- [ ] Stable-Hair モデルを Network Volume に配置
-- [ ] GPU付きDockerfileでの本番推論テスト
+- [x] Modal Serverless デプロイ (Memory Snapshot対応)
+- [x] GitHub Actions CI/CD (modal/* push で自動デプロイ)
+- [x] Stable-Hair モデルを Modal Volume にダウンロード
+- [x] Vercel 環境変数切り替え (BACKEND=modal)
+- [x] Stable-Hair ライセンス確認 → Apache 2.0 (商用利用可)
+- [x] 単体テスト・結合テスト (220本)
+- [ ] Memory Snapshot 作成完了 → models_ready: true 確認
+- [ ] 日本人顔での品質検証 (Bald Converter品質がリスク)
+- [ ] E2Eパイプラインテスト (gpu-mirror → proxy → Modal)
+- [ ] コールドスタートベンチマーク (目標: 2-3秒)
 - [ ] REVOL Mirror の gemini.ts 変更
-- [ ] 日本人顔での品質検証
-- [ ] Bald キャッシュ永続化 (Network Volume)
-- [ ] Stable-Hair ライセンス確認 (著者問い合わせ)
