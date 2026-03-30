@@ -12,8 +12,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { validateApiKey } from '../../../../lib/auth';
-import { processGenerateContent } from '../../../../lib/generate-content';
+import { validateApiKey } from '../../../../../lib/auth';
+import { processGenerateContent } from '../../../../../lib/generate-content';
+import type { GeminiRequest } from '../../../../../lib/types';
 
 export async function POST(
   request: NextRequest,
@@ -68,44 +69,4 @@ export async function POST(
       { status: 500 },
     );
   }
-}
-
-// --- Gemini API の型定義 ---
-
-export interface GeminiPart {
-  text?: string;
-  inlineData?: {
-    mimeType: string;
-    data: string; // base64
-  };
-}
-
-export interface GeminiContent {
-  role: string;
-  parts: GeminiPart[];
-}
-
-export interface GeminiRequest {
-  contents: GeminiContent[];
-  generationConfig?: {
-    responseModalities?: string[];
-    [key: string]: unknown;
-  };
-  [key: string]: unknown;
-}
-
-export interface GeminiResponse {
-  candidates: Array<{
-    content: {
-      role: string;
-      parts: GeminiPart[];
-    };
-    finishReason: string;
-  }>;
-  modelVersion: string;
-  usageMetadata?: {
-    promptTokenCount: number;
-    candidatesTokenCount: number;
-    totalTokenCount: number;
-  };
 }

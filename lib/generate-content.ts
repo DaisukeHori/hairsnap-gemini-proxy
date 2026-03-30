@@ -13,7 +13,7 @@ import type {
   GeminiRequest,
   GeminiResponse,
   GeminiPart,
-} from '../app/api/v1beta/models/[...path]/route';
+} from './types';
 import { callRunPodStableHair } from './runpod-client';
 
 interface ExtractedInput {
