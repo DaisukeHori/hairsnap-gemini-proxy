@@ -3,9 +3,13 @@
 #
 # モデルは Network Volume (/runpod-volume) に保存。
 # 初回リクエスト時に handler.py が自動ダウンロード。
+#
+# ⚠️ ベースイメージのタグは DockerHub で確認:
+#    https://hub.docker.com/r/runpod/pytorch/tags
+#    存在しないタグ (例: cuda12.1.1) を指定するとビルドが即失敗する。
 # =============================================================================
 
-FROM runpod/pytorch:2.4.0-py3.11-cuda12.1.1-devel-ubuntu22.04
+FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
 
 ENV PYTHONUNBUFFERED=1
 ENV MODEL_PATH=/runpod-volume/models
