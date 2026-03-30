@@ -76,7 +76,9 @@ def encode_ndarray(arr: np.ndarray, quality: int = 92) -> str:
 class StableHairEngine:
     """Stable-Hair v1 推論エンジン (RunPod Serverless 用)"""
 
-    def __init__(self, model_base: str, device: str = "cuda", dtype=torch.float16):
+    def __init__(self, model_base: str, device: str = "cuda", dtype=None):
+        if dtype is None:
+            dtype = torch.float16
         print("[init] Loading Stable-Hair models...")
         t0 = time.time()
 
