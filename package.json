@@ -1,0 +1,21 @@
+{
+  "name": "hairsnap-gemini-proxy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Gemini API互換プロキシ: Stable-Hair (RunPod Serverless) バックエンド",
+  "scripts": {
+    "dev": "next dev --port 3100",
+    "build": "next build",
+    "start": "next start --port 3100"
+  },
+  "dependencies": {
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "typescript": "^5.7.0"
+  }
+}
