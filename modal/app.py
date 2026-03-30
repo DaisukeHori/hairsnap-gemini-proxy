@@ -176,6 +176,7 @@ def _encode_ndarray(arr, q: int = 92) -> str:
     timeout=300,
     scaledown_window=30,  # 30秒アイドルでコンテナ停止
     enable_memory_snapshot=True,
+    memory=8192,  # 8GB RAM for model loading
 )
 class StableHairInference:
     """Stable-Hair 推論エンドポイント"""
