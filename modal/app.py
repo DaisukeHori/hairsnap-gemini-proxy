@@ -174,7 +174,7 @@ def _encode_ndarray(arr, q: int = 92) -> str:
     gpu="A10G",  # 24GB, RTX 4090相当。T4/L4/A100に変更可
     volumes={MODEL_DIR: model_vol, CODE_DIR: code_vol},
     timeout=300,
-    container_idle_timeout=30,  # 30秒アイドルでコンテナ停止
+    scaledown_window=30,  # 30秒アイドルでコンテナ停止
     enable_memory_snapshot=True,
 )
 class StableHairInference:
