@@ -23,7 +23,6 @@ RunPod GitHub Integration でデプロイ:
 """
 
 import runpod
-import torch
 import numpy as np
 import base64
 import time
@@ -33,8 +32,16 @@ import sys
 from io import BytesIO
 from PIL import Image
 
+# GPU依存ライブラリは遅延インポート (ビルドテスト時はなくてもOK)
+try:
+    import torch
+    HAS_TORCH = True
+except ImportError:
+    HAS_TORCH = False
+
 # Stable-Hair のコードパスを追加
-sys.path.insert(0, "/app/Stable-Hair")
+if os.path.exists("/app/Stable-Hair"):
+    sys.path.insert(0, "/app/Stable-Hair")
 
 # ---------------------------------------------------------------------------
 # グローバル変数: モデルはコンテナ起動時に1回だけロード
@@ -238,15 +245,36 @@ class StableHairEngine:
 # ---------------------------------------------------------------------------
 # RunPod Handler
 # ---------------------------------------------------------------------------
+def check_models_available():
+    """モデルファイルとGPUライブラリが存在するか確認"""
+    if not HAS_TORCH:
+        return False
+    sd_path = os.path.join(MODEL_BASE, "stable-diffusion-v1-5", "unet", "config.json")
+    stage1_path = os.path.join(MODEL_BASE, "stable-hair", "stage1", "pytorch_model.bin")
+    return os.path.exists(sd_path) and os.path.exists(stage1_path)
+
+
 def handler(job):
     global stable_hair_engine
 
-    # 遅延ロード (初回リクエスト時のみ)
-    if stable_hair_engine is None:
-        stable_hair_engine = StableHairEngine(model_base=MODEL_BASE)
-
     inp = job["input"]
     gpu_start = time.time()
+
+    # --- エコーモード: モデルなしでもテスト可能 ---
+    if inp.get("echo") or not check_models_available():
+        model_status = "available" if check_models_available() else "not_found"
+        return {
+            "status": "echo_mode",
+            "model_path": MODEL_BASE,
+            "models_available": model_status,
+            "message": "Handler is running. Models not loaded yet — mount Network Volume with models.",
+            "gpu_time_ms": int((time.time() - gpu_start) * 1000),
+            "input_keys": list(inp.keys()),
+        }
+
+    # --- 通常モード: Stable-Hair推論 ---
+    if stable_hair_engine is None:
+        stable_hair_engine = StableHairEngine(model_base=MODEL_BASE)
 
     # --- 入力バリデーション ---
     if "customer_photo" not in inp:
