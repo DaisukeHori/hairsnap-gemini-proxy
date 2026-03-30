@@ -186,10 +186,10 @@ class StableHairInference:
         """スナップショット作成前: モデルをCPUメモリに読み込む"""
         import torch
 
-        # Stable-Hair コードパス追加
+        # Stable-Hair コードパス追加 (appendでpipパッケージを優先)
         sh_code = os.path.join(CODE_DIR, "Stable-Hair")
         if os.path.exists(sh_code) and sh_code not in sys.path:
-            sys.path.insert(0, sh_code)
+            sys.path.append(sh_code)
 
         self.models_available = _models_ready()
         if not self.models_available:
