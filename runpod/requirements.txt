@@ -1,12 +1,27 @@
-runpod==1.7.0
-torch==2.5.0
-torchvision==0.20.0
-diffusers==0.30.0
-transformers==4.44.0
-accelerate==0.33.0
-safetensors==0.4.0
-Pillow==10.0.0
-omegaconf==2.3.0
-kornia==0.7.0
-einops==0.8.0
-opencv-python-headless==4.10.0.84
+# --- RunPod ---
+runpod>=1.7.0
+
+# --- PyTorch (CUDA 12.1) ---
+--extra-index-url https://download.pytorch.org/whl/cu121
+torch==2.4.0
+torchvision==0.19.0
+
+# --- Diffusers / Transformers (Stable-Hair が使用) ---
+diffusers==0.31.0
+transformers==4.45.2
+accelerate>=0.33.0
+safetensors>=0.4.0
+
+# --- 画像処理 ---
+Pillow>=10.0.0
+opencv-python-headless>=4.9.0
+numpy>=1.26.0
+
+# --- Stable-Hair の依存 ---
+omegaconf>=2.3.0
+einops>=0.4.1
+kornia>=0.7.0
+
+# --- ダウンロード ---
+gdown>=5.0.0
+huggingface_hub>=0.25.0

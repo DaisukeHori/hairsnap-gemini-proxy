@@ -1,0 +1,13 @@
+{
+  "input": {
+    "customer_photo": "<base64_encoded_customer_photo>",
+    "reference_photo": "<base64_encoded_reference_hair_photo>",
+    "bald_cache_key": "test_customer_001",
+    "seed": 42,
+    "num_inference_steps": 30,
+    "guidance_scale": 1.5,
+    "hair_scale": 1.0,
+    "controlnet_scale": 1.0,
+    "size": 512
+  }
+}
