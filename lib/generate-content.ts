@@ -15,6 +15,9 @@ import type {
   GeminiPart,
 } from './types';
 import { callRunPodStableHair } from './runpod-client';
+import { callModalStableHair } from './modal-client';
+
+const BACKEND = process.env.BACKEND ?? 'runpod';  // "runpod" or "modal"
 
 interface ExtractedInput {
   images: Buffer[];
@@ -62,8 +65,9 @@ export async function processGenerateContent(
     .digest('hex')
     .slice(0, 16);
 
-  // RunPod Serverless に送信
-  const result = await callRunPodStableHair({
+  // バックエンドに送信 (環境変数 BACKEND で切り替え)
+  const callBackend = BACKEND === 'modal' ? callModalStableHair : callRunPodStableHair;
+  const result = await callBackend({
     customerPhoto,
     referencePhoto,
     additionalImages,
