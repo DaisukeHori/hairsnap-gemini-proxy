@@ -50,7 +50,7 @@ image = (
         "kornia>=0.7.0",
         "opencv-python-headless>=4.9.0",
         "gdown>=5.0.0",
-        "huggingface_hub[hf_transfer]>=0.25.0",
+        "huggingface_hub[hf_transfer]>=0.25.0,<0.26.0",  # 0.26+ removed cached_download (needed by diffusers 0.27)
         "numpy<2",
         "Pillow>=10.0.0",
         "fastapi[standard]",
